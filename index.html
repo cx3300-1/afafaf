@@ -13,18 +13,22 @@
 <meta name="theme-color" content="#f0f2f5">
     <style>
         /* === 1. 全局锁定：防止橡皮筋回弹 === */
-        body, html { 
-            margin: 0; padding: 0; 
-            width: 100%; height: 100%; 
-            overflow: hidden; 
-            background: #f0f2f5;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            
-            /* 锁死页面，禁止 iOS 整体拖拽 */
-            position: fixed; 
-            top: 0; left: 0;
-            overscroll-behavior: none; 
-        }
+        body, html {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); /* 你的背景色 */
+    font-family: -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+
+    /* === 新增这两行关键代码 === */
+    /* 1. 给顶部留出刘海的高度 */
+    padding-top: env(safe-area-inset-top);
+    /* 2. 给底部留出黑条的高度 */
+   
+    /* 3. 确保加了 padding 不会撑大页面导致滚动条 */
+    box-sizing: border-box; 
+}
 
         /* === 2. 桌面启动器 (Launcher) === */
         #launcher {
