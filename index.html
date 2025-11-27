@@ -8,7 +8,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#f0f2f5">
+<link rel="manifest" href="manifest.json">
 
+<meta name="theme-color" content="#f0f2f5">
     <style>
         /* === 全局重置 === */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -38,13 +40,30 @@
     box-sizing: border-box; 
 }
 
-        /* === 1. 桌面启动器 (Launcher) === */
         #launcher {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); /* 漂亮的渐变背景 */
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            
+            /* 布局 */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+            
+            /* 背景 */
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            
+            /* 动画 */
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s;
             z-index: 1;
+
+            /* === 关键修复：在这里加 padding，强制内容下移 === */
+            padding-top: env(safe-area-inset-top); 
+            padding-bottom: env(safe-area-inset-bottom);
+            box-sizing: border-box; /* 确保 padding 不会把页面撑大 */
         }
 
         /* 隐藏启动器时的动画 */
@@ -73,10 +92,22 @@
 
         /* === 2. 应用容器 (App Container) === */
         #app-viewer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff; z-index: 2;
-            transform: translateY(100%); /* 默认藏在屏幕下方 */
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: #fff; 
+            z-index: 2;
+            
+            /* 动画 */
+            transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+            /* === 关键修复：iframe 容器也要下移，防止网页被刘海挡住 === */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            box-sizing: border-box; 
         }
         #app-viewer.active { transform: translateY(0); }
 
