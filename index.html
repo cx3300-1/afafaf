@@ -12,7 +12,30 @@
     <style>
         /* === 全局重置 === */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; }
+        /* === 全局重置与锁定 === */
+body, html { 
+    margin: 0; 
+    padding: 0; 
+    width: 100%; 
+    height: 100%; 
+    
+    /* 1. 禁止出现滚动条 */
+    overflow: hidden; 
+    
+    /* 2. 【核心修复】强制固定定位，防止页面整体被拖动 */
+    position: fixed; 
+    top: 0;
+    left: 0;
+    
+    /* 3. 禁止 iOS 的“橡皮筋”回弹效果 */
+    overscroll-behavior: none; 
+    
+    /* 4. 设置底色，防止万一露底时显示白色 */
+    background-color: #f0f2f5; 
+    
+    /* 5. 字体设置 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+}
 
         /* === 1. 桌面启动器 (Launcher) === */
         #launcher {
