@@ -12,13 +12,7 @@
 
 <meta name="theme-color" content="#f0f2f5">
     <style>
- /* === 全局重置 === */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        /* 
-           重点修改 1：锁定 Body
-           使用 position: fixed 强制让页面即使在 iOS 上也无法整体拖动 
-        */
+        /* === 1. 全局锁定：防止橡皮筋回弹 === */
         body, html { 
             margin: 0; padding: 0; 
             width: 100%; height: 100%; 
@@ -26,27 +20,38 @@
             background: #f0f2f5;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             
-            /* 禁止滚动的核心属性 */
+            /* 锁死页面，禁止 iOS 整体拖拽 */
             position: fixed; 
             top: 0; left: 0;
             overscroll-behavior: none; 
         }
 
-        /* === 1. 桌面启动器 (Launcher) === */
+        /* === 2. 桌面启动器 (Launcher) === */
         #launcher {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            display: flex; flex-direction: column; 
+            
+            /* 
+               【关键修改 1】：不再使用 center 居中
+               改为 flex-start (从上往下排)，配合 padding 把内容硬挤下去
+            */
+            justify-content: flex-start; 
+            align-items: center;
+            
             background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s;
             z-index: 1;
 
             /* 
-               重点修改 2：适配安全区域 (Safe Area)
-               padding-top 确保内容不被刘海遮挡
-               padding-bottom 确保内容不被底部横条遮挡
+               【关键修改 2】：主页面的顶部距离
+               env(safe-area-inset-top) 是刘海高度
+               + 120px 是额外下移的距离，确保标题位于视觉舒适区，绝不顶到状态栏
             */
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            padding-top: calc(env(safe-area-inset-top) + 120px);
+            
+            /* 底部设为 0，保证背景铺满全屏 */
+            padding-bottom: 0; 
+            box-sizing: border-box;
         }
 
         #launcher.hidden { transform: scale(1.2); opacity: 0; pointer-events: none; }
@@ -71,7 +76,7 @@
 
         .app-name { font-size: 14px; color: #333; font-weight: 500; text-shadow: 0 1px 2px rgba(255,255,255,0.5); }
 
-        /* === 2. 应用容器 (App Container) === */
+        /* === 3. 应用容器 (App Container) === */
         #app-viewer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; z-index: 2;
@@ -79,35 +84,32 @@
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             
             /* 
-               重点修改 3：应用容器也要适配安全区域 
-               这样 iframe 就不会顶到刘海下面去了
+               【关键修改 3】：完全移除 App 容器的 padding 
+               不干扰 A 和 B 的显示，让它们自己处理或全屏显示 
             */
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            padding: 0;
             
-            /* 必须加 flex 布局让 iframe 撑满剩余空间，否则 iframe 可能会溢出 */
-            display: flex;
-            flex-direction: column; 
+            display: flex; flex-direction: column;
         }
         #app-viewer.active { transform: translateY(0); }
 
-        /* iframe 需要填满扣除安全区域后的空间 */
         iframe { 
             width: 100%; 
-            flex: 1; /* 自动占据剩余高度 */
+            height: 100%; /* 强制填满容器 */
+            flex: 1; 
             border: none; 
             display: none; 
-            /* 允许 iframe 内部滚动，但阻止外部滚动 */
+            /* 允许 iframe 内部滚动 */
             overflow-y: auto; 
             -webkit-overflow-scrolling: touch; 
         }
         iframe.show { display: block; }
 
-        /* === 3. 悬浮按钮 (FAB) === */
+        /* === 4. 悬浮按钮 (FAB) === */
         .fab-container {
-            /* 修改 bottom，加上安全区域距离，避免被底部小黑条挡住 */
             position: fixed; 
-            bottom: calc(30px + env(safe-area-inset-bottom)); 
+            /* 底部距离 30px，不刻意避开黑条，符合你的全屏需求 */
+            bottom: 30px; 
             right: 20px; 
             z-index: 999;
             display: none;
@@ -122,7 +124,6 @@
             display: flex; justify-content: center; align-items: center;
             font-size: 24px; cursor: pointer; user-select: none;
             transition: transform 0.3s, background 0.3s;
-            /* 防止按钮被点击时产生高亮背景块 */
             -webkit-tap-highlight-color: transparent;
         }
         .fab-main.open { transform: rotate(45deg); background: #ff4757; }
