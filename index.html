@@ -205,13 +205,21 @@
 /* --- 悬浮容器 --- */
 #fab-container {
     position: fixed;
-    bottom: 100px; /* 初始位置 */
+    /* 初始位置保持不变 */
+    bottom: 100px; 
     right: 20px;
     z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end; /* 右对齐 */
-    transition: transform 0.1s; /* 拖拽时的平滑度 */
+    
+    /* 【核心修改】固定容器大小为按钮大小，不要被菜单撑大 */
+    width: 56px;
+    height: 56px;
+    
+    /* 允许菜单飘出容器范围 */
+    overflow: visible; 
+    
+    /* 移除 flex 布局对按钮位置的影响 */
+    display: block; 
+    transition: transform 0.1s; 
 }
 
 /* --- 主按钮 --- */
@@ -244,19 +252,26 @@
 
 /* --- 菜单列表 (Action Buttons) --- */
 .fab-actions {
+    /* 【核心修改】绝对定位，让菜单飘在按钮上面，不占空间 */
+    position: absolute;
+    bottom: 70px; /* 距离底部 56px(按钮高) + 14px(间距) */
+    right: 0;     /* 右对齐 */
+    
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 12px;
-    margin-bottom: 15px; /* 距离主按钮的距离 */
     
-    /* 默认隐藏状态 */
+    /* 动画保持不变 */
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px) scale(0.8);
     transform-origin: bottom right;
     transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
     pointer-events: none;
+    
+    /* 防止文字换行影响宽度 */
+    width: max-content; 
 }
 
 /* 菜单展开状态 */
@@ -304,7 +319,7 @@
 /* --- 隐身模式 (Ghost Mode) --- */
 #fab-container.ghost-mode {
     /* 强制定位样式由 JS 控制，这里控制外观 */
-    opacity: 0.3; /* 半透明 */
+    opacity: 0.1; /* 半透明 */
     transition: opacity 0.3s, right 0.3s, bottom 0.3s;
 }
 
@@ -496,18 +511,25 @@ const fabContainer = document.getElementById('fab-container');
 
     // --- [新增] 隐藏功能 ---
     function hideFab() {
-        closeMenu();
-        // 1. 复位到右下角 (重置 style 属性)
-        fabContainer.style.left = '';
-        fabContainer.style.top = '';
-        fabContainer.style.bottom = 'calc(30px + env(safe-area-inset-bottom))';
-        fabContainer.style.right = '20px';
+        closeMenu(); 
         
-        // 2. 开启隐身模式类
+        // --- 核心修改 ---
+        // 1. 获取【黑色主按钮(fab-main)】在屏幕上的位置
+        // 注意：不要获取 fabContainer 的位置，因为它包含菜单的高度
+        const mainRect = fabMain.getBoundingClientRect();
+        
+        // 2. 将容器的左上角，直接钉死在圆球当前的位置
+        // 这样当菜单消失（display: none）后，圆球正好就在这个坐标，不会位移
+        fabContainer.style.left = mainRect.left + 'px';
+        fabContainer.style.top = mainRect.top + 'px';
+        fabContainer.style.bottom = 'auto'; 
+        fabContainer.style.right = 'auto';
+        
+        // 3. 开启隐身模式
+        // (CSS中 .ghost-mode .fab-actions 是 display: none，所以必须用上面的方法定位)
         fabContainer.classList.add('ghost-mode');
         
-        // 3. 显示提示
-        showToast("已隐藏。点击屏幕右下角可呼出。");
+        showToast("已隐藏。点击当前位置可呼出。");
     }
 
     // 恢复显示
