@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-
  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>EPhone</title>
@@ -18,7 +17,6 @@
     <meta name="theme-color" content="#f0f2f5">
     <title>PWA Demo</title>
     <style>
-        /* --- 你的原始 CSS (保持不变) --- */
         :root {
             --screen-width: 350px;
             --screen-height: 650px;
@@ -51,11 +49,9 @@
             padding-right: 20px;
         }
 
-       
-
         /* --- 1. 启动器主屏幕 (Home Screen) --- */
         #launcher-screen {
-                      width: 100%;
+            width: 100%;
             height: 100vh;
             position: relative;
             overflow: hidden;
@@ -115,14 +111,12 @@
         }
 
         /* --- 2. iframe 容器 --- */
-        /* 关键修复：绝对定位撑满父容器，不留缝隙 */
-                /* --- 2. iframe 容器 --- */
         .app-frame {
-            position: fixed; /* 改为 fixed，强制固定在屏幕上，不随内容滚动 */
+            position: fixed; 
             top: 0;
             left: 0;
-            width: 100vw;    /* 强制宽度为视口宽度 */
-            height: 100vh;   /* 强制高度为视口高度，与启动器完全一致 */
+            width: 100vw;    
+            height: 100vh;   
             border: none;
             background-color: #fff;
             opacity: 0;
@@ -135,14 +129,13 @@
         .app-frame.active {
             opacity: 1;
             visibility: visible;
-            z-index: 50; /* 提高层级，确保盖住启动器 */
+            z-index: 50; 
         }
-
 
         /* --- 3. 悬浮按钮 (FAB) --- */
         #fab-container {
             position: fixed;
-            bottom: calc(30px + env(safe-area-inset-bottom)); /* 适配底部安全区 */
+            bottom: calc(30px + env(safe-area-inset-bottom)); 
             right: 20px;
             z-index: 100;
             display: flex;
@@ -163,7 +156,7 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background-color: rgba(30, 30, 30, 0.8); /* 半透明黑，减少遮挡 */
+            background-color: rgba(30, 30, 30, 0.8); 
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             color: white;
@@ -217,7 +210,6 @@
             position: relative;
         }
         
-        /* 标签提示 */
         .fab-item::after {
             content: attr(data-label);
             position: absolute;
@@ -247,16 +239,13 @@
 </head>
 <body>
 
-    <!-- 1. 启动器 (主屏幕) -->
     <div id="launcher-screen">  
         <div class="app-grid">
-            <!-- App A -->
             <div class="app-icon-wrapper" onclick="openApp('frame-a')">
                 <div class="app-icon icon-a">A</div>
                 <span class="app-name">应用 A</span>
             </div>
             
-            <!-- App B -->
             <div class="app-icon-wrapper" onclick="openApp('frame-b')">
                 <div class="app-icon icon-b">B</div>
                 <span class="app-name">应用 B</span>
@@ -264,12 +253,9 @@
         </div>
     </div>
 
-    <!-- 2. 应用容器 (Iframe) -->
-    <!-- 请替换这里的 src 为你的实际链接 -->
     <iframe id="frame-a" class="app-frame" src="https://cx3300-1.github.io/ooooka/"></iframe>
     <iframe id="frame-b" class="app-frame" src="https://cx3300-1.github.io/-k-/"></iframe>
 
-    <!-- 3. 悬浮按钮 (FAB) -->
     <div id="fab-container" class="fab-container">
         <div class="fab-menu">
             <button class="fab-item" onclick="goHome()" data-label="返回主屏幕">
@@ -296,6 +282,8 @@
             frames.forEach(frame => {
                 if (frame.id === frameId) {
                     frame.classList.add('active');
+                    // 核心修改：重新加载 iframe 以刷新内容
+                    frame.src = frame.src;
                 } else {
                     frame.classList.remove('active');
                 }
@@ -307,7 +295,6 @@
             document.body.classList.remove('app-open');
             launcherScreen.classList.remove('hidden');
             
-            // 延迟移除 iframe 的 active 状态，保持退出动画平滑
             setTimeout(() => {
                 frames.forEach(frame => frame.classList.remove('active'));
             }, 300);
@@ -340,4 +327,5 @@
     </script>
 </body>
 </html>
+
 
