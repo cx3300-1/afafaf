@@ -2,60 +2,64 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <!-- 视口设置：锁定缩放，适配刘海屏 -->
+    <!-- 1. 修复：允许缩放，不锁死，保持原生手感 -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes"
     />
     <title>EPhone PWA</title>
-    <!-- 这里的 link 保持你原有的，我直接写在 style 里确保生效 -->
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="apple-touch-icon"
+      href="https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1758510900942_qdqqd_djw0z2.jpeg"
+    />
+    <link rel="manifest" href="manifest.json" />
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EPhone" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1756312261242_qdqqd_g0eriz.jpeg"
+    />
     <meta name="theme-color" content="#f0f2f5" />
 <style>
-    /* --- 1. 全局重置：这是解决滑动的关键第一步 --- */
-    * {
-        box-sizing: border-box; /* 任何内边距都不会撑大盒子 */
-        -webkit-tap-highlight-color: transparent;
-    }
-
+    /* --- 核心变量 --- */
     :root {
-        --jelly-pink: rgba(255, 192, 203, 0.92);
-        --cream-white: #fff0f5;
-        --deep-candy: #e91e63;
-        --tape-dark: #795548;
-        --soft-shadow: 8px 8px 0px rgba(233, 30, 99, 0.15);
+        --jelly-pink: rgba(255, 192, 203, 0.92); 
+        --cream-white: #fff0f5;   
+        --deep-candy: #e91e63;    
+        --tape-dark: #795548;     
+        --soft-shadow: 8px 8px 0px rgba(233, 30, 99, 0.15); 
     }
 
-    html {
+    html { 
+        -webkit-text-size-adjust: 100%; 
+        height: 100%; 
+        /* 2. 修复：物理层面禁止横向溢出 */
+        overflow-x: hidden;
         width: 100%;
-        height: 100%;
-        overflow: hidden; /* 禁止 html 滚动 */
     }
     
     body {
         margin: 0;
-        padding: 0;
         font-family: 'DotGothic16', monospace;
         background-color: #fff0f5;
-        /* 背景样式 */
         background-image: 
             linear-gradient(90deg, rgba(255, 192, 203, 0.5) 50%, transparent 50%),
             linear-gradient(rgba(255, 192, 203, 0.5) 50%, transparent 50%);
         background-size: 50px 50px;
-        
-        /* --- 2. 核弹级防滑动设置 --- */
-        position: fixed; /* 彻底钉死 body，把它当做一张图片处理 */
-        top: 0; left: 0; right: 0; bottom: 0;
+        height: 100%; 
         width: 100%;
-        height: 100%;
-        overflow: hidden; /* 再次确认禁止溢出 */
-        overscroll-behavior: none; /* 禁止橡皮筋 */
-        touch-action: none; /* 禁止默认触摸动作（除了点击） */
-        
+        overflow-x: hidden; /* 双重保险 */
         color: var(--deep-candy);
+        position: relative;
+        
+        /* 3. 核心修复：只允许垂直方向的操作 (pan-y)，
+           这样手指左右划动时，浏览器会直接忽略，而不是拖动页面 */
+        touch-action: pan-y pinch-zoom;
     }
 
     /* 星星层 */
@@ -96,45 +100,54 @@
         20% { opacity: 0.8; }
         100% { opacity: 0; top: 100vh; transform: translateX(50px) rotate(360deg); }
     }
-    
-    /* 噪点纹理 */
+    /* 噪点纹理 z-index: 9999 */
     body::after {
         content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
         pointer-events: none; z-index: 9999; opacity: 0.3;
     }
 
-    /* 主屏幕容器 */
     #phone-screen {
-        width: 100%; height: 100%; 
-        position: relative; 
-        /* 允许内部 flex 布局 */
-        display: flex; flex-direction: column;
+        width: 100%; height: 100vh; position: relative; overflow: hidden; display: flex; flex-direction: column;
         background: transparent; 
-        z-index: 10;
     }
 
+    /* 通用容器 */
     .screen {
-        width: 100%; height: 100%; 
+        width: 100%; height: 100%; position: relative; overflow: hidden;
         display: flex; flex-direction: column;
-        justify-content: center; /* 垂直居中 */
-        align-items: center;     /* 水平居中 */
+    }
+    #home-screen-pages-container { flex-grow: 1; overflow: hidden; position: relative; width: 100%; }
+    #home-screen-pages { width: 100%; height: 100%; display: flex; flex-direction: row; }
+    .home-screen-page { width: 100%; height: 100%; flex-shrink: 0; display: flex; justify-content: center; align-items: center;}
+    #main-content-area { width: 100%; display: flex; justify-content: center; align-items: center; }
+
+    #home-screen { 
+        padding: 20px 0; 
+        box-sizing: border-box; 
+        z-index: 10;
+        /* 确保主屏幕也不会触发横向滚动 */
+        overflow-x: hidden;
     }
 
+    /* --- 桌面布局 --- */
     #desktop-layout {
-        width: 100%;
         display: flex; justify-content: center; align-items: center;
-        /* 修改：Padding 不要太大，防止挤压 */
+        /* 4. 修复：稍微减小内边距，给小屏幕手机留活路 */
         padding: 0 10px; 
+        box-sizing: border-box;
+        width: 100%; 
     }
     
-    /* --- 3. 磁带布局修正：解决撑破屏幕的核心 --- */
+    /* 磁带主体 */
     #cassette-tape {
-        /* 原来是 330px，现在设为 100%，但最大不超过 330px */
+        /* 5. 核心修复：流体宽度 */
+        /* 意思：尽量占满，但最大不要超过 330px。
+           如果屏幕小于 330，它就会自动变小，不会撑破页面 */
         width: 100%;
         max-width: 330px; 
-        height: 210px;
         
+        height: 210px;
         background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2)), var(--jelly-pink);
         backdrop-filter: blur(8px); 
         border-radius: 20px; 
@@ -142,12 +155,12 @@
         box-shadow: var(--soft-shadow);
         position: relative;
         display: flex; flex-direction: column;
-        padding: 12px; 
-        /* 确保不会因为边框溢出 */
-        transform: translateZ(0); 
+        padding: 12px; box-sizing: border-box;
+        
+        /* 防止内部元素太宽撑开 */
+        overflow: hidden; 
     }
 
-    /* 漂浮动画 */
     .floating { animation: float 3s ease-in-out infinite; }
     @keyframes float {
         0% { transform: translateY(0px); }
@@ -155,7 +168,6 @@
         100% { transform: translateY(0px); }
     }
 
-    /* 螺丝 */
     .screw {
         position: absolute; width: 10px; height: 10px;
         background: #f8bbd0; border-radius: 50%;
@@ -164,33 +176,29 @@
     .tl { top: 10px; left: 10px; } .tr { top: 10px; right: 10px; }
     .bl { bottom: 10px; left: 10px; } .br { bottom: 10px; right: 10px; }
 
-    /* 磁带头部 */
     .cassette-header {
         height: 40px; background: white;
-        margin: 0 10px 8px 10px; /* 稍微减小 margin */
-        border-radius: 8px;
+        margin: 0 20px 8px 20px; border-radius: 8px;
         transform: rotate(-1deg);
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0; /* 防止被压缩 */
     }
     .sticker-label {
         width: 100%; text-align: center;
         border: 2px dashed #f48fb1; border-radius: 6px; margin: 3px; height: calc(100% - 6px);
         display: flex; justify-content: space-around; align-items: center;
     }
-    .tape-name { font-weight: bold; color: var(--deep-candy); font-size: 14px; letter-spacing: 1px; }
+    .tape-name { font-weight: bold; color: var(--deep-candy); font-size: 16px; letter-spacing: 1px; }
     .tape-time { background: var(--deep-candy); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
 
-    /* 磁带中间窗口 */
     .magnetic-window {
         flex-grow: 1;
         background: rgba(255,255,255,0.3);
         border-radius: 15px; border: 2px solid white;
-        margin: 0 2px; position: relative;
+        margin: 0 5px; position: relative;
         display: flex; justify-content: space-between; align-items: center;
-        /* Padding 改为自适应百分比，防止在小屏幕挤在一起 */
-        padding: 0 5%;
+        /* 减小这里的 padding 以适应流体宽度 */
+        padding: 0 15px; 
     }
 
     .tape-strip {
@@ -199,25 +207,25 @@
         border-radius: 4px; opacity: 0.8;
     }
 
-    /* 转轴容器 */
     .spool-container {
         position: relative; z-index: 1;
-        /* 使用缩小比例来适配极窄屏幕 */
-        width: 68px; height: 68px; 
+        width: 70px; height: 70px; 
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        cursor: pointer;
+        cursor: pointer; -webkit-tap-highlight-color: transparent;
         transition: transform 0.1s;
+        /* 防止挤压变形 */
+        flex-shrink: 0; 
     }
     .spool-container:active { transform: scale(0.9); }
 
     .tape-roll {
-        position: absolute; width: 64px; height: 64px;
+        position: absolute; width: 68px; height: 68px;
         border-radius: 50%; background: var(--tape-dark); z-index: -1;
         box-shadow: 0 0 0 3px rgba(121, 85, 72, 0.3);
     }
 
     .spool-gear {
-        position: absolute; width: 70px; height: 70px;
+        position: absolute; width: 74px; height: 74px;
         border-radius: 50%; border: 2px dashed white;
         animation: rotateGear 8s linear infinite;
     }
@@ -225,7 +233,7 @@
     @keyframes rotateGear { to { transform: rotate(360deg); } }
 
     .spool-hole {
-        width: 44px; height: 44px;
+        width: 48px; height: 48px;
         background: white; border-radius: 50%;
         border: 4px solid white; overflow: hidden;
         box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
@@ -235,31 +243,39 @@
     .handwritten-label {
         position: absolute; bottom: -28px;
         background: #fff; color: var(--deep-candy);
-        padding: 3px 8px; border-radius: 10px;
+        padding: 3px 10px; border-radius: 10px;
         font-size: 12px; font-weight: bold;
         box-shadow: 2px 2px 0 rgba(0,0,0,0.05);
         transform: rotate(-3deg); border: 1px solid #ffcdd2;
-        white-space: nowrap; /* 防止换行 */
+        /* 防止标签文字换行撑开宽度 */
+        white-space: nowrap; 
     }
     .right .handwritten-label { transform: rotate(3deg); }
 
-    .cassette-bottom { height: 10px; flex-shrink: 0; }
+    .cassette-bottom { height: 15px; }
 
-    /* --- 4. 悬浮按钮 --- */
+    /* --- 悬浮按钮 --- */
     #fab-container {
         position: fixed; bottom: 80px; right: 20px; 
         z-index: 12000;
         width: 64px; height: 64px; display: block;
         transition: opacity 0.3s;
     }
-    #fab-container.ghost-mode { opacity: 0; pointer-events: auto; }
-    #fab-container.ghost-mode.menu-open { opacity: 1; }
+
+    #fab-container.ghost-mode {
+        opacity: 0; 
+        pointer-events: auto; 
+    }
+    #fab-container.ghost-mode.menu-open {
+        opacity: 1;
+    }
 
     #fab-main {
         width: 64px; height: 64px; border-radius: 50%; cursor: pointer;
         display: flex; justify-content: center; align-items: center; position: relative;
         background: repeating-radial-gradient(#222 0, #222 2px, #333 3px, #333 4px);
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        -webkit-tap-highlight-color: transparent;
     }
     #fab-main::after {
         content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
@@ -277,12 +293,9 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .fab-actions {
-        position: absolute; bottom: 80px; right: 5px; 
-        display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+        position: absolute; bottom: 80px; right: 5px; display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
         opacity: 0; visibility: hidden; pointer-events: none;
         transform: translateY(20px) scale(0.9); transition: all 0.2s;
-        /* 确保菜单不撑宽页面 */
-        max-width: 300px;
     }
     #fab-container.menu-open .fab-actions { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0) scale(1); }
 
@@ -291,100 +304,152 @@
         border: 2px solid var(--deep-candy); color: var(--deep-candy);
         display: flex; justify-content: center; align-items: center;
         box-shadow: 2px 2px 0 rgba(233, 30, 99, 0.1);
-        overflow: hidden; padding: 0;
     }
-    .fab-mini-btn img { width: 100%; height: 100%; object-fit: cover; }
-    .fab-mini-btn svg { width: 24px; height: 24px; fill: var(--deep-candy); }
-    
-    .fab-action-btn { display: flex; align-items: center; justify-content: flex-end; cursor: pointer; }
     .fab-label {
         background: white; color: var(--deep-candy); padding: 4px 8px; border-radius: 6px;
-        font-size: 12px; margin-right: 12px; border: 1px solid #f8bbd0;
-        box-shadow: 2px 2px 0 rgba(233, 30, 99, 0.1); white-space: nowrap;
+        font-size: 12px; margin-right: 8px; border: 1px solid #f8bbd0;
+        box-shadow: 2px 2px 0 rgba(233, 30, 99, 0.1);
     }
 
-    /* --- 5. App 窗口修复 --- */
+    /* --- App 窗口 --- */
     .app-window {
-        width: 100%; height: 100%; 
-        position: fixed; /* 强制全屏覆盖 */
-        top: 0; left: 0; 
+        width: 100%; 
+        height: 100%; 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
         background: white; 
         z-index: 11000; 
-        display: none; flex-direction: column; 
-        opacity: 0; transform: scale(0.95); transition: all 0.3s;
-        touch-action: auto; /* App 内部恢复触摸 */
-        overflow: hidden; /* 防止 iframe 外溢 */
+        display: none; 
+        flex-direction: column; 
+        opacity: 0; 
+        transform: scale(0.95);
+        transition: all 0.3s;
+        box-sizing: border-box; 
+        /* 确保打开 App 后，页面底层彻底无法滚动 */
+        overflow: hidden;
     }
     .app-window.active { display: flex; opacity: 1; transform: scale(1); }
-    /* iframe 必须允许滚动 */
-    .app-iframe { width: 100%; height: 100%; border: none; background: white; touch-action: auto; }
+    .app-iframe { width: 100%; height: 100%; border: none; background: white; }
     
     #toast-msg {
         position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
         background: white; color: var(--deep-candy); border: 2px solid var(--deep-candy);
         padding: 8px 20px; border-radius: 20px; font-size: 14px; 
-        z-index: 13000; opacity: 0; visibility: hidden; transition: opacity 0.2s;
+        z-index: 13000; 
+        opacity: 0; visibility: hidden; transition: opacity 0.2s;
         box-shadow: 4px 4px 0 rgba(233, 30, 99, 0.15);
-        white-space: nowrap;
     }
     #toast-msg.show { opacity: 1; visibility: visible; }
+    
+    .fab-action-btn {
+        display: flex;
+        align-items: center;      
+        justify-content: flex-end; 
+        cursor: pointer;
+    }
+    
+    .fab-label {
+        background: white; 
+        color: var(--deep-candy); 
+        padding: 4px 8px; 
+        border-radius: 6px;
+        font-size: 12px; 
+        margin-right: 12px; 
+        border: 1px solid #f8bbd0;
+        box-shadow: 2px 2px 0 rgba(233, 30, 99, 0.1);
+        white-space: nowrap; 
+    }
+    
+    .fab-mini-btn {
+        width: 44px; height: 44px; 
+        background: white; 
+        border-radius: 50%;
+        border: 2px solid var(--deep-candy); 
+        color: var(--deep-candy);
+        display: flex; justify-content: center; align-items: center;
+        box-shadow: 2px 2px 0 rgba(233, 30, 99, 0.1);
+        overflow: hidden; 
+        padding: 0;       
+    }
+    
+    .fab-mini-btn img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .fab-mini-btn svg {
+        width: 24px;
+        height: 24px;
+        fill: var(--deep-candy);
+    }
 
 </style>
-</head>
-<body>
+
+  </head>
+  <body>
     <div id="star-layer"></div>
     <div id="sakura-container"></div>
 
     <div id="phone-screen">
       <div id="home-screen" class="screen">
-        <!-- 桌面布局 -->
-        <div id="desktop-layout">
-            <div id="cassette-tape" class="floating">
-                <div class="screw tl"></div>
-                <div class="screw tr"></div>
-                <div class="screw bl"></div>
-                <div class="screw br"></div>
+        <div id="home-screen-pages-container">
+          <div id="home-screen-pages">
+            <div class="home-screen-page">
+              <div id="main-content-area">
+<div id="desktop-layout">
+    <div id="cassette-tape" class="floating">
+        <div class="screw tl"></div>
+        <div class="screw tr"></div>
+        <div class="screw bl"></div>
+        <div class="screw br"></div>
 
-                <div class="cassette-header">
-                    <div class="sticker-label">
-                        <span class="tape-name">💖 Ephone MIX 💖</span>
-                        <span class="tape-time">A side</span>
-                    </div>
-                </div>
-
-                <div class="magnetic-window">
-                    <div class="spool-container left" onclick="openApp('app-a')">
-                        <div class="spool-gear"></div>
-                        <div class="spool-hole">
-                            <img src="https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1756312261242_qdqqd_g0eriz.jpeg" alt="App A">
-                        </div>
-                        <div class="tape-roll"></div>
-                        <span class="handwritten-label">330</span>
-                    </div>
-
-                    <div class="tape-strip"></div>
-
-                    <div class="spool-container right" onclick="openApp('app-b')">
-                        <div class="spool-gear"></div>
-                        <div class="spool-hole">
-                            <img src="https://i.postimg.cc/Kj8JnRcp/267611-CC01-F8-A3-B4910-A2-C2-FFDE479-DC.jpg" alt="App B">
-                        </div>
-                        <div class="tape-roll"></div>
-                        <span class="handwritten-label">兔K</span>
-                    </div>
-                </div>
-
-                <div class="cassette-bottom"></div>
+        <div class="cassette-header">
+            <div class="sticker-label">
+                <span class="tape-name">💖 Ephone MIX 💖</span>
+                <span class="tape-time">A side</span>
             </div>
+        </div>
+
+        <div class="magnetic-window">
+            <div class="spool-container left" onclick="openApp('app-a')">
+                <div class="spool-gear"></div>
+                <div class="spool-hole">
+                    <img src="https://s3plus.meituan.net/opapisdk/op_ticket_885190757_1756312261242_qdqqd_g0eriz.jpeg" alt="App A">
+                </div>
+                <div class="tape-roll"></div>
+                <span class="handwritten-label">330</span>
+            </div>
+
+            <div class="tape-strip"></div>
+
+            <div class="spool-container right" onclick="openApp('app-b')">
+                <div class="spool-gear"></div>
+                <div class="spool-hole">
+                    <img src="https://i.postimg.cc/Kj8JnRcp/267611-CC01-F8-A3-B4910-A2-C2-FFDE479-DC.jpg" alt="App B">
+                </div>
+                <div class="tape-roll"></div>
+                <span class="handwritten-label">兔K</span>
+            </div>
+        </div>
+
+        <div class="cassette-bottom"></div>
+    </div>
+</div>
+
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- App A -->
+      <!-- App 窗口 -->
       <div id="app-a" class="app-window app-frame">
         <iframe data-src="https://cx3300-1.github.io/ooooka/" src="" class="app-iframe"></iframe>
       </div>
 
-      <!-- App B -->
       <div id="app-b" class="app-window app-frame">
         <iframe data-src="https://cx3300-1.github.io/-k-/" src="" class="app-iframe"></iframe>
       </div>
@@ -424,6 +489,7 @@
             </div>
           </div>
         </div>
+
 
         <div id="fab-main"></div>
       </div>
@@ -645,5 +711,5 @@
         });
       }
     </script>
-</body>
+  </body>
 </html>
